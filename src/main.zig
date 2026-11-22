@@ -4,18 +4,19 @@ const EXPECTED_INPUT_LENGHT = 32;
 const BUFFER_BYTE_SIZE = 64;
 
 
-pub fn main() !void {
-    const args = std.os.argv;
+pub fn main(init: std.process.Init) !void {
+    const arena: std.mem.Allocator = init.arena.allocator();
+    const args = try init.minimal.args.toSlice(arena);
 
     if (args.len < 2){
-        try std.io.getStdErr().writer().print("Please pass a hexadecimal\n", .{});
+        std.debug.print("Please pass a hexadecimal\n", .{});
         return;
     }
 
-    var in = std.mem.span(args[1]);
+    var in = args[1];
 
     if (in.len != EXPECTED_INPUT_LENGHT){
-        try std.io.getStdErr().writer().print("The hexadecimal need to be exactly {d} chars long\n", .{EXPECTED_INPUT_LENGHT});
+        std.debug.print("The hexadecimal need to be exactly {d} chars long\n", .{EXPECTED_INPUT_LENGHT});
         return;
     }
 
@@ -55,8 +56,9 @@ pub fn main() !void {
         j += 1;
 
     }
-    
-    try std.io.getStdOut().writer().print("{s}\n", .{out});
+
+    try std.Io.File.stdout().writeStreamingAll(init.io, &out);
+    try std.Io.File.stdout().writeStreamingAll(init.io, "\n");
 }
 
 fn stringToHexReversed (hex : []const u8, allocator : std.mem.Allocator) ![]u8 {
